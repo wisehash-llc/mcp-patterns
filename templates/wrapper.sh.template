@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# MCP wrapper: launches <SERVICE_NAME> MCP server.
+#
+# Token resolution: <describe — e.g., "via sovereign vault SDK with alias layer">.
+# Caller may pre-set <SERVICE>_TENANT_ALIAS to select a tenant-scoped cipher.
+#
+# This wrapper follows the wrapper-as-launcher pattern from
+# wisehash-llc/mcp-patterns. The .mcp.json points here, not at the binary.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SERVICE_DIR="${REPO_ROOT}/services/<SERVICE_NAME>"
+
+# --- Step 1: bootstrap environment ---
+
+# Language runtime — adjust per service
+VENV_PYTHON="${SERVICE_DIR}/.venv/bin/python"
+
+# MCP server config — adjust per service
+export <SERVICE>_URL="${<SERVICE>_URL:-http://localhost:<PORT>}"
+export PYTHONPATH="${SERVICE_DIR}"
+
+# Tenant alias — caller can override; defaults to a sensible cipher name
+# (the per-tenant alias-native pattern is documented in patterns/per-tenant-alias-native.md, v0.2+)
+export <SERVICE>_TENANT_ALIAS="${<SERVICE>_TENANT_ALIAS:-<DEFAULT_CIPHER>}"
+
+# --- Step 2: resolve credentials ---
+
+# Bootstrap credential-store connection (sovereign-seed pattern):
+# pull credential-store connection params from a sister service's .env that
+# already has them. This avoids storing credential-store URLs in N places.
+# The pattern is backend-agnostic — works against REST-based vaults, CLI-based
+# password managers, cloud-provider secret managers, and on-prem secret stores.
+# The .env carries whatever connection params the SDK in <SERVICE>'s
+# mcp_server.py expects.
+BOOTSTRAP_ENV="${REPO_ROOT}/services/<BOOTSTRAP_SERVICE>/.env"
+if [ -f "${BOOTSTRAP_ENV}" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${BOOTSTRAP_ENV}"
+    set +a
+fi
+
+# --- Step 3: exec the real binary ---
+
+exec "${VENV_PYTHON}" "${SERVICE_DIR}/mcp_server.py"
+
+# ---
+# Substitution markers (replace before deploying):
+#
+#   <SERVICE_NAME>      — lowercase service slug (used in paths, env var
+#                         names, default port comments)
+#   <SERVICE>           — uppercase service slug (used in env var prefixes)
+#   <PORT>              — local port the MCP server listens on (omit for
+#                         pure stdio servers)
+#   <DEFAULT_CIPHER>    — default credential cipher name in your
+#                         sovereign credential store
+#   <BOOTSTRAP_SERVICE> — sister service whose .env carries credential-store
+#                         connection params (the sovereign-seed pattern);
+#                         operator may also set credential-store envs
+#                         directly without the bootstrap step
+#
+# After substitution, run the wrapper directly to verify it launches the
+# MCP server cleanly:
+#
+#   ./scripts/mcp-<service-name>.sh
+#   # should hang waiting for stdin (the MCP server listening for an
+#   # initialize message from the agent). Ctrl+C to exit.
+#
+# Then point your agent's .mcp.json at the wrapper path.

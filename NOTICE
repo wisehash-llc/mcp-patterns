@@ -1,0 +1,8 @@
+mcp-patterns
+Copyright 2026 WiseHash LLC
+
+This pattern library wraps upstream work — Anthropic's Model Context Protocol
+specification, the first-party MCP servers (Linear, GitHub, and others), and
+the mcp-remote HTTP-to-stdio bridge. It builds on prior framing of agent
+infrastructure by Nate B. Jones, and on contributions to the OpenClaw / OB1
+ecosystem by Alan Shurafa. See README.md for full credit.
