@@ -36,7 +36,7 @@ export PYTHONPATH="${SERVICE_DIR}"
 
 # Step 2 — resolve credentials
 # the credential resolution chain (cache → primary → fallback → error)
-# is defined in patterns/credential-resolution-chain.md (v0.2+).
+# is defined in patterns/credential-resolution-chain.md.
 # the wrapper template at templates/wrapper.sh.template demonstrates the
 # bootstrap-from-sister-service pattern that avoids repeating
 # credential-store connection params in every wrapper.
@@ -66,17 +66,17 @@ nothing by design. the wrapper sets every env var it needs, including the
 ones that select tenancy, runtime endpoint, and language paths. inheritance
 from the calling agent's environment is a leak surface; explicit env-var
 setting is a discipline anchor. the agent runtime may pre-set some env vars
-(e.g., a tenant alias for per-tenant credential resolution per the v0.2+
-pattern), but those are explicit `WRAPPER_KNOWS_ABOUT` env vars, not
-implicit inheritance.
+(e.g., a tenant alias for per-tenant credential resolution — see
+[`per-tenant-aliases.md`](per-tenant-aliases.md)), but those are explicit
+`WRAPPER_KNOWS_ABOUT` env vars, not implicit inheritance.
 
 ## when this pattern doesn't fit
 
 - **HTTP transport MCP servers.** the wrapper-as-launcher shape assumes the
   MCP server speaks stdio; first-party HTTP MCP servers (Linear, GitHub,
-  others) need a stdio bridge wrapper instead. that pattern surfaces in v0.2+
-  as `patterns/http-to-stdio-bridge.md`. the wrapper-as-launcher discipline
-  still applies to the bridge wrapper — same three steps, same NOT-list.
+  others) are handled by the client's native HTTP transport instead. we
+  evaluated bridging them down to stdio and rejected it — see
+  [`http-to-stdio-rejected.md`](http-to-stdio-rejected.md).
 - **MCP servers shipped as a single binary with no language runtime.** the
   PYTHONPATH / VENV_PYTHON lines are vestigial; the wrapper still needs the
   env-bootstrap + credential-resolution + `exec` shape, just simpler.
