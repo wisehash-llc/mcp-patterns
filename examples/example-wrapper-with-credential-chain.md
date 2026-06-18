@@ -168,12 +168,13 @@ that an agent might paper over.**
   the example-service database lives on a different host than the agent, the
   remote wrapper variant from [`stdio-over-ssh`](../patterns/stdio-over-ssh.md)
   wraps this wrapper.
-- **HTTP-to-stdio bridging**: this example uses a stdio-native MCP server.
-  for first-party HTTP MCP servers (Linear, GitHub), the bridge wrapper
-  pattern from `patterns/http-to-stdio-bridge.md` (v0.2+) replaces step 3.
+- **HTTP transport servers**: this example uses a stdio-native MCP server.
+  first-party HTTP MCP servers (Linear, GitHub) are handled by the client's
+  native HTTP transport; bridging them to stdio was evaluated and rejected
+  ([`http-to-stdio-rejected.md`](../patterns/http-to-stdio-rejected.md)).
 - **deeper credential-chain semantics**: cache invalidation, refresh-token
-  rotation, vault-backend-specific quirks. those land in
-  `patterns/credential-resolution-chain.md` (v0.2+).
+  rotation, store-backend-specific quirks. the chain itself is documented in
+  [`credential-resolution-chain.md`](../patterns/credential-resolution-chain.md).
 
 the example is intentionally narrow — one wrapper, one MCP server, one
 credential, two agents. the patterns compose without losing the discipline.
