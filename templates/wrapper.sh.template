@@ -22,7 +22,7 @@ export <SERVICE>_URL="${<SERVICE>_URL:-http://localhost:<PORT>}"
 export PYTHONPATH="${SERVICE_DIR}"
 
 # Tenant alias — caller can override; defaults to a sensible cipher name
-# (the per-tenant alias-native pattern is documented in patterns/per-tenant-alias-native.md, v0.2+)
+# (the per-tenant alias-native pattern is documented in patterns/per-tenant-aliases.md)
 export <SERVICE>_TENANT_ALIAS="${<SERVICE>_TENANT_ALIAS:-<DEFAULT_CIPHER>}"
 
 # --- Step 2: resolve credentials ---
