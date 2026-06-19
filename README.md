@@ -64,6 +64,51 @@ credential cipher per call; the server resolves the incoming token back to an
 identity to attribute every action — see
 [`patterns/per-tenant-aliases.md`](patterns/per-tenant-aliases.md).
 
+## security
+
+the credential discipline is the point of this repo, so the invariants are
+collected here rather than left implicit across the pattern docs:
+
+- **credentials resolve at exec time, never at config time.** the cipher *name*
+  may live in `.mcp.json`; the cipher *value* never does, and never lands in any
+  dotfile — see
+  [`patterns/credential-resolution-chain.md`](patterns/credential-resolution-chain.md).
+- **a value is never logged.** a miss is logged by name; the error says what to
+  fix, not what was attempted.
+- **the chain fails loud.** a missing credential halts with a clear remediation
+  rather than starting an agent against a silently-absent secret.
+- **per-tenant attribution is explicit.** when one server serves several agent
+  identities, the wrapper selects the cipher per call and the server resolves the
+  token back to an identity for the audit trail — see
+  [`patterns/per-tenant-aliases.md`](patterns/per-tenant-aliases.md).
+
+the chain, walked at every launch — only the cipher *name* crosses into config,
+and a miss fails loud rather than starting on a silently-absent secret:
+
+```mermaid
+flowchart TD
+    A["agent"] --> B[".mcp.json<br/>wrapper path + cipher name only"]
+    B --> C["wrapper script<br/>bootstrap environment"]
+    C --> D["credential resolver<br/>runs at launch"]
+    D --> E{"cache hit?"}
+    E -- "yes" --> J["exec real binary"]
+    E -- "no" --> F{"primary store hit?"}
+    F -- "yes" --> J
+    F -- "no / unreachable" --> G{"fallback env var set?"}
+    G -- "yes" --> J
+    G -- "no" --> H["fail-loud error<br/>name only; no value logged"]
+    B -. "value never in config" .-> I["guardrail:<br/>cipher name only"]
+    D -. "log names only" .-> I
+```
+
+**credential handling is environment-specific by design.** these patterns name a
+*contract*, not a backend: resolve late, expose names not values, fail loud. the
+worked example uses a REST-based sovereign vault, but the same contract holds
+against a CLI password manager, a cloud-provider secret manager, or an on-prem
+store. the wrapper is the seam where your environment's mechanism plugs in —
+adopt the contract and supply your own resolver. do not lift the example's
+specific store assuming it is the pattern; the resolver is yours to bring.
+
 ## evaluated and rejected
 
 **HTTP-to-stdio bridging** — first-party MCP servers speak HTTP transport. a
@@ -105,7 +150,7 @@ or tool schema does not hot-reload into a running session. see
 
 ## status
 
-- **version:** v0.2
+- **version:** v0.2.1
 - **license:** [Apache 2.0](LICENSE) (federation default)
 - **provenance:** patterns extracted from several months of production use
   across mixed-model agent peers
